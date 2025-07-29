@@ -1,0 +1,124 @@
+---
+title: "pbm_elasticities"
+output: html_document
+date: "2025-07-23"
+---
+
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+
+# Read the data
+data <- read_csv("data/pbm_elasticities.csv")
+
+# Reshape data from wide to long format for meat types and their standard errors
+meat_cols <- c("beef", "pork", "chicken", "fish")
+se_cols <- c("beef_se", "pork_se", "chicke_se", "fish_se")
+
+# Create long format data
+plot_data <- data %>%
+  select(study, author, year, all_of(meat_cols), all_of(se_cols)) %>%
+  pivot_longer(
+    cols = all_of(meat_cols),
+    names_to = "meat_type",
+    values_to = "elasticity"
+  ) %>%
+  # Add corresponding standard errors
+  mutate(
+    se_col = case_when(
+      meat_type == "beef" ~ beef_se,
+      meat_type == "pork" ~ pork_se,
+      meat_type == "chicken" ~ chicke_se,
+      meat_type == "fish" ~ fish_se
+    )
+  ) %>%
+  # Remove rows with missing elasticity values
+  filter(!is.na(elasticity)) %>%
+  # Calculate confidence intervals (95% CI), handling missing SEs
+  mutate(
+    ci_lower = ifelse(!is.na(se_col), elasticity - 1.96 * se_col, NA),
+    ci_upper = ifelse(!is.na(se_col), elasticity + 1.96 * se_col, NA),
+    # Create study labels with year
+    study_label = paste0(author, " (", year, ")"),
+    # Clean up meat type names
+    meat_type = stringr::str_to_title(meat_type),
+    # Add indicator for whether SE is available
+    has_se = !is.na(se_col)
+  ) %>%
+  select(study_label, meat_type, elasticity, se_col, ci_lower, ci_upper, has_se)
+
+# Create the forest plot
+forest_plot <- ggplot(plot_data, aes(x = elasticity, y = study_label)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.7) +
+  # Add error bars only for studies with standard errors
+  geom_errorbarh(data = filter(plot_data, has_se), 
+                 aes(xmin = ci_lower, xmax = ci_upper, color = meat_type), 
+                 height = 0.2, alpha = 0.7) +
+  # Add all points, with different shapes for those with/without SEs
+  geom_point(aes(color = meat_type, shape = has_se), size = 3, alpha = 0.8) +
+  facet_wrap(~ meat_type, scales = "free_x", ncol = 2) +
+  labs(
+    title = "Cross-Price Elasticities of Meat Demand with Respect to PBM Price Changes",
+    subtitle = "Forest plot showing elasticity estimates with 95% confidence intervals (where available)",
+    x = "Cross-Price Elasticity",
+    y = "Study",
+    color = "Meat Type",
+    shape = "Has Standard Error",
+    caption = "Positive values indicate substitutes, negative values indicate complements\nCircles = studies with SEs (95% CI shown), Triangles = studies without SEs"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 11),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_line(color = "gray90", size = 0.3),
+    axis.text.y = element_text(size = 9),
+    plot.caption = element_text(size = 9, color = "gray50"),
+    legend.position = "bottom",
+    legend.box = "horizontal"
+  ) +
+  scale_color_manual(values = c("Beef" = "#8B4513", "Pork" = "#FF69B4", 
+                                "Chicken" = "#DAA520", "Fish" = "#4682B4")) +
+  scale_shape_manual(values = c("TRUE" = 16, "FALSE" = 17),  # Circle for SE, triangle for no SE
+                     labels = c("TRUE" = "Yes", "FALSE" = "No"))
+
+# Display the plot
+print(forest_plot)
+
+# Print summary statistics with SE availability info
+cat("\nSummary of Cross-Price Elasticities:\n")
+cat("=====================================\n")
+summary_stats <- plot_data %>%
+  group_by(meat_type) %>%
+  summarise(
+    n_studies = n(),
+    n_with_se = sum(has_se, na.rm = TRUE),
+    mean_elasticity = round(mean(elasticity, na.rm = TRUE), 3),
+    median_elasticity = round(median(elasticity, na.rm = TRUE), 3),
+    min_elasticity = round(min(elasticity, na.rm = TRUE), 3),
+    max_elasticity = round(max(elasticity, na.rm = TRUE), 3),
+    .groups = "drop"
+  )
+
+print(summary_stats)
+
+# Print details about studies without standard errors
+cat("\nStudies without standard errors:\n")
+cat("=================================\n")
+no_se_studies <- plot_data %>%
+  filter(!has_se) %>%
+  select(study_label, meat_type, elasticity) %>%
+  arrange(meat_type, study_label)
+
+print(no_se_studies)
+
+# Save the plot
+ggsave("elasticities_forest.png", forest_plot, 
+       width = 12, height = 8, dpi = 300, bg = "white")
+```
+

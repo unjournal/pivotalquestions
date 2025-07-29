@@ -1,0 +1,8 @@
+study,author,method,sample,year,beef,beef_se,pork,pork_se,chicken,chicke_se,fish,fish_se,pbm,pbm_se,notes
+Freitas-Groff et al. (2024),FreitasGroff et al,AIDS,US,2016-2020,-0.0153,0.0064,-0.0153,0.0078,-0.0168,0.0068,-0.23,0.0133,-0.842,0.0333,These values are for Beyond/Imp. The table also contains values for heritage PBM
+Neuhofer and Lusk (2023),Neuhofer and Lusk,AIDS,US,2018-2020,0.003,0.001,,,0,0.002,,,-3.795,0.208,Values for beef and chicken are for ground products only. Table also contains values for ground turkey.
+Liu and Ansink (2024),Liu and Ansink,AIDS,Netherlands,2015-2018,-0.247,0.202,0.143,0.182,-0.149,0.091,-0.172,0.158,1.52,0.364,Value for chicken is poultry.
+Zhao et al. (2023),Zhao et al,AIDS,US,2017-2020,-0.003,,-0.003,,0.008,,0.002,,-1.483,,"SEs not given, but all coefs sig at 1%"
+Tonsor and Bina (2023),Tonsor and Bina,AIDS,US,2022,0.01,,0.108,,-0.041,,,,-1.232,,"SEs not given, beef insig, pork, chicken, pbm sig at 5% level"
+Tonsor et al. (2022),Tonsor et al,CE,US,2020,-0.718,,,,0.813,,,,-4.664,,These values are for Impossible. Study also has values for Beyond. No SEs given.
+Caputo et al. (2025),Caputo et al,CE,US,2023,0.044,,-0.01,,0,,,,0,,"Values are given by PB burgers, PB nuggets, and PB chicken sausage. Own prices are 0 somehow. Not sure these are reliable results."
